@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compose Message</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2>WebMail</h2>
+      <ul>
+         <li >
+            <a href="{{ url_for('index') }}">🏠 Send Messages</a>
+          </li>
+          <li><a href="{{ url_for('sent_messages') }}">📩 Sent Messages</a></li>
+          <li><a href="{{ url_for('drafts') }}">📝 Drafts</a></li>
+          <li><a href="{{ url_for('logs') }}">📊 Logs</a></li>
+          <li class="active"><a href="{{ url_for('compose') }}">✉️ Compose</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <header>
+        <h1>Compose Message</h1>
+        <p>Send a single message to a recipient</p>
+      </header>
+
+      <section class="card">
+        <form action="{{ url_for('compose') }}" method="POST">
+          <label>Recipient Email or Phone</label>
+          <input type="text" name="recipient" placeholder="email@example.com or +2348012345678" required>
+
+          <label>Subject</label>
+          <input type="text" name="subject" placeholder="Message subject">
+
+          <label>Message Body</label>
+          <textarea name="body" placeholder="Type your message here..." rows="5" required></textarea>
+
+          <label>Default Region (for phone numbers)</label>
+          <input type="text" name="default_region" placeholder="NG">
+
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+
+  </div>
+</body>
+</html>

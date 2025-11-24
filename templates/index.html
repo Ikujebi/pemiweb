@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebMail - Send Messages</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <h2>
+          <b>WebMail</b>
+          <img
+            class="logo"
+            src="../static/images/WhatsApp Image 2025-11-24 at 1.17.37 AM.jpeg"
+            alt="logo"
+          />
+        </h2>
+        <ul>
+          <li class="active">
+            <a href="{{ url_for('index') }}">🏠 Send Messages</a>
+          </li>
+          <li><a href="{{ url_for('sent_messages') }}">📩 Sent Messages</a></li>
+          <li><a href="{{ url_for('drafts') }}">📝 Drafts</a></li>
+          <li><a href="{{ url_for('logs') }}">📊 Logs</a></li>
+          <li><a href="{{ url_for('compose') }}">✉️ Compose</a></li>
+        </ul>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main-content">
+        <header>
+          <h1>Send Emails & SMS</h1>
+          <p>Quickly send single or bulk messages</p>
+        </header>
+
+        <!-- Single message form -->
+        <section class="card">
+          <h2>Send Single Message</h2>
+          <form action="/upload_json" method="POST" id="singleForm">
+            <label>Recipient Email or Phone</label>
+            <input
+              type="text"
+              name="recipient"
+              placeholder="email@example.com or +2348012345678"
+              required
+            />
+
+            <label>Subject</label>
+            <input
+              type="text"
+              name="subject"
+              placeholder="Message subject"
+              required
+            />
+
+            <label>Message</label>
+            <textarea
+              name="body"
+              placeholder="Type your message here..."
+              rows="5"
+              required
+            ></textarea>
+
+            <label>Default Region (for phone numbers)</label>
+            <input type="text" name="default_region" placeholder="NG" />
+
+            <button type="submit">Send</button>
+          </form>
+        </section>
+
+        <!-- Bulk message form -->
+        <section class="card">
+          <h2>Send Bulk Messages (CSV)</h2>
+          <form
+            action="/upload_csv"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            <label>Campaign Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Campaign name"
+              required
+            />
+
+            <label>Subject</label>
+            <input type="text" name="subject" placeholder="Campaign subject" />
+
+            <label>Message Body</label>
+            <textarea
+              name="body"
+              placeholder="Type your message here..."
+              rows="5"
+              required
+            ></textarea>
+
+            <label>Default Region</label>
+            <input type="text" name="default_region" placeholder="NG" />
+
+            <label>Upload CSV</label>
+            <input type="file" name="file" accept=".csv" required />
+
+            <button type="submit">Send Bulk</button>
+          </form>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

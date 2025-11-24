@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drafts</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2>WebMail</h2>
+      <ul>
+         <li>
+            <a href="{{ url_for('index') }}">🏠 Send Messages</a>
+          </li>
+          <li><a href="{{ url_for('sent_messages') }}">📩 Sent Messages</a></li>
+          <li class="active"><a href="{{ url_for('drafts') }}">📝 Drafts</a></li>
+          <li><a href="{{ url_for('logs') }}">📊 Logs</a></li>
+          <li><a href="{{ url_for('compose') }}">✉️ Compose</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <header>
+        <h1>Drafts</h1>
+        <p>Messages you have saved as drafts</p>
+      </header>
+
+      <section class="card">
+        {% if drafts %}
+          <table>
+            <thead>
+              <tr>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for draft in drafts %}
+                <tr>
+                  <td>{{ draft.recipient.email or draft.recipient.phone }}</td>
+                  <td>{{ draft.campaign.subject }}</td>
+                  <td>{{ draft.campaign.body }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>No drafts available.</p>
+        {% endif %}
+      </section>
+    </main>
+
+  </div>
+</body>
+</html>
