@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: mailing
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    command: flask run --host=0.0.0.0 --port=5000
+    environment:
+      FLASK_APP: app.py
+      DATABASE_URL: postgresql+psycopg2://user:pass@postgres:5432/mailing
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SENDGRID_API_KEY: your_sendgrid_key
+      SENDGRID_FROM_EMAIL: your_email
+      TWILIO_ACCOUNT_SID: your_twilio_sid
+      TWILIO_AUTH_TOKEN: your_twilio_token
+      TWILIO_FROM_NUMBER: your_twilio_number
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: .
+    command: celery -A tasks.celery worker --loglevel=info --concurrency=4
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:pass@postgres:5432/mailing
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SENDGRID_API_KEY: your_sendgrid_key
+      SENDGRID_FROM_EMAIL: your_email
+      TWILIO_ACCOUNT_SID: your_twilio_sid
+      TWILIO_AUTH_TOKEN: your_twilio_token
+      TWILIO_FROM_NUMBER: your_twilio_number
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+
+  flower:
+    image: mher/flower
+    command: flower --broker=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
