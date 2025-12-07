@@ -1,5 +1,6 @@
 from flask import request, render_template
-from models import SessionLocal, Recipient, Campaign, SendLog
+from database import SessionLocal  
+from models import SendLog, Recipient, Campaign
 from utils import validate_email_address, validate_phone_number
 from tasks import send_to_recipient
 

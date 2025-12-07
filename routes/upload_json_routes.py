@@ -1,63 +1,53 @@
+# routes/upload_json_routes.py
 from flask import request, jsonify
-from models import SessionLocal, Recipient, Campaign, SendLog
+from database import SessionLocal
+from models import Recipient, Campaign, SendLog
 from utils import validate_email_address, validate_phone_number
 from tasks import send_to_recipient
+import traceback
 
 def register_upload_json_routes(app):
     @app.route("/upload_json", methods=["POST"])
     def upload_json():
-        data = request.get_json() or {}
-        recs = data.get("recipients", [])
-        name = data.get("campaign", {}).get("name", "Daily Campaign")
-        subject = data.get("campaign", {}).get("subject", "")
-        body = data.get("campaign", {}).get("body", "")
-        default_region = data.get("default_region", None)
+        with SessionLocal() as db:
+            try:
+                recipient_raw = request.form.get("recipient", "").strip()
+                subject = request.form.get("subject", "").strip()
+                body = request.form.get("body", "").strip()
+                default_region = request.form.get("default_region", None)
 
-        db = SessionLocal()
-        campaign = Campaign(name=name, subject=subject, body=body)
-        db.add(campaign)
-        db.commit()
-        db.refresh(campaign)
+                email = validate_email_address(recipient_raw) or None
+                phone = validate_phone_number(recipient_raw, default_region) or None
 
-        added = 0
-        queued = 0
-        seen = set()
+                if not email and not phone:
+                    return jsonify({"sent": False, "error": "Recipient must be a valid email or phone"}), 400
 
-        for r in recs:
-            raw_email = r.get("email", "") or ""
-            raw_phone = r.get("phone", "") or ""
-            email = validate_email_address(raw_email) or None
-            phone = validate_phone_number(raw_phone, default_region) or None
-            if not email and not phone:
-                continue
+                campaign = Campaign(name="Single Message", subject=subject, body=body)
+                db.add(campaign); db.commit(); db.refresh(campaign)
 
-            key = f"{email or ''}|{phone or ''}"
-            if key in seen:
-                continue
-            seen.add(key)
+                recipient = None
+                if email:
+                    recipient = db.query(Recipient).filter_by(email=email).first()
+                if not recipient and phone:
+                    recipient = db.query(Recipient).filter_by(phone=phone).first()
 
-            existing = None
-            if email:
-                existing = db.query(Recipient).filter(Recipient.email == email).first()
-            if not existing and phone:
-                existing = db.query(Recipient).filter(Recipient.phone == phone).first()
+                if not recipient:
+                    recipient = Recipient(email=email, phone=phone)
+                    db.add(recipient); db.commit(); db.refresh(recipient)
 
-            if existing:
-                recipient = existing
-            else:
-                recipient = Recipient(email=email, phone=phone, opted_in=True)
-                db.add(recipient)
-                db.commit()
-                db.refresh(recipient)
-                added += 1
+                channel = "email" if email else "sms"
+                log = SendLog(
+                    campaign_id=campaign.id,
+                    recipient_id=recipient.id,
+                    channel=channel,
+                    status="pending"
+                )
+                db.add(log); db.commit(); db.refresh(log)
 
-            channel = "email" if email else "sms"
-            log = SendLog(campaign_id=campaign.id, recipient_id=recipient.id, channel=channel, status="pending")
-            db.add(log)
-            db.commit()
-            db.refresh(log)
-            send_to_recipient.apply_async(args=[log.id])
-            queued += 1
+                send_to_recipient.apply_async(args=[log.id])
 
-        db.close()
-        return jsonify({"added": added, "queued": queued}), 200
+                return jsonify({"sent": True, "recipient_id": recipient.id, "channel": channel}), 200
+
+            except Exception as e:
+                traceback.print_exc()
+                return jsonify({"sent": False, "error": str(e)}), 500

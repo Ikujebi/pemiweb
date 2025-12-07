@@ -8,6 +8,13 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
+    <style>
+      /* Optional quick feedback styling */
+      .feedback {
+        margin-top: 8px;
+        font-weight: bold;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -47,7 +54,7 @@
             <input
               type="text"
               name="recipient"
-              placeholder="email@example.com or +2348012345678"
+              placeholder="email@example.com or +1234567845"
               required
             />
 
@@ -71,6 +78,7 @@
             <input type="text" name="default_region" placeholder="NG" />
 
             <button type="submit">Send</button>
+            <p id="singleFeedback" class="feedback"></p>
           </form>
         </section>
 
@@ -78,6 +86,7 @@
         <section class="card">
           <h2>Send Bulk Messages (CSV)</h2>
           <form
+            id="bulkForm"
             action="/upload_csv"
             method="POST"
             enctype="multipart/form-data"
@@ -108,9 +117,76 @@
             <input type="file" name="file" accept=".csv" required />
 
             <button type="submit">Send Bulk</button>
+            <p id="bulkFeedback" class="feedback"></p>
           </form>
         </section>
       </main>
     </div>
+
+    <script>
+      // ---------- Single Message ----------
+      const singleForm = document.getElementById("singleForm");
+      const singleFeedback = document.getElementById("singleFeedback");
+
+      singleForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        singleFeedback.textContent = "⏳ Sending message...";
+        singleFeedback.style.color = "black";
+        const formData = new FormData(singleForm);
+        singleForm.querySelector("button").disabled = true;
+
+        try {
+          const res = await fetch(singleForm.action, { method: "POST", body: formData });
+          const data = await res.json();
+
+          if (res.ok) {
+            singleFeedback.textContent = "✅ Message sent successfully!";
+            singleFeedback.style.color = "green";
+            singleForm.reset();
+          } else {
+            singleFeedback.textContent = "❌ " + (data.error || "Failed to send message.");
+            singleFeedback.style.color = "red";
+          }
+        } catch (err) {
+          singleFeedback.textContent = "❌ Error sending message.";
+          singleFeedback.style.color = "red";
+          console.error(err);
+        } finally {
+          singleForm.querySelector("button").disabled = false;
+        }
+      });
+
+      // ---------- Bulk Message ----------
+      const bulkForm = document.getElementById("bulkForm");
+      const bulkFeedback = document.getElementById("bulkFeedback");
+
+      bulkForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        bulkFeedback.textContent = "⏳ Sending bulk messages...";
+        bulkFeedback.style.color = "black";
+        const formData = new FormData(bulkForm);
+        bulkForm.querySelector("button").disabled = true;
+
+        try {
+          const res = await fetch(bulkForm.action, { method: "POST", body: formData });
+          const data = await res.json();
+
+          if (res.ok) {
+            bulkFeedback.textContent = "✅ Bulk messages sent successfully!";
+            bulkFeedback.style.color = "green";
+            bulkForm.reset();
+          } else {
+            bulkFeedback.textContent = "❌ " + (data.error || "Failed to send messages.");
+            bulkFeedback.style.color = "red";
+          }
+        } catch (err) {
+          bulkFeedback.textContent = "❌ Error sending messages.";
+          bulkFeedback.style.color = "red";
+          console.error(err);
+        } finally {
+          bulkForm.querySelector("button").disabled = false;
+        }
+      });
+    </script>
   </body>
 </html>
